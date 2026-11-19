@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gasket Order Form</title>
+<style>
+  :root{--blue:#1b4f9c;--bg:#f3f6fb;--line:#c9d3e3;--ink:#1d2433;--ok:#17803d;--err:#b42318}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px}
+  header h1{margin:0;color:var(--blue);font-size:22px}
+  header small{color:#556;display:block;line-height:1.5}
+  .serial{text-align:right}
+  .serial b{font-size:22px;color:#c0392b}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-top:14px}
+  h2{font-size:16px;margin:0 0 12px;color:var(--blue)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  label{display:block;font-size:12px;font-weight:600;color:#445;margin-bottom:4px}
+  input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+  input:focus,select:focus,textarea:focus{outline:2px solid #9bb8e6;border-color:var(--blue)}
+  .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:820px}
+  th{background:#eaf0fa;color:var(--blue);font-size:12px;text-align:left;padding:8px;border:1px solid var(--line)}
+  td{border:1px solid var(--line);padding:4px}
+  td input,td select{border:none;border-radius:4px;padding:7px 6px}
+  td.sl{width:42px;text-align:center;font-weight:600;background:#fafbfd}
+  td.amt{width:110px;text-align:right;font-variant-numeric:tabular-nums;padding-right:10px;background:#fafbfd}
+  td.x{width:36px;text-align:center}
+  .xbtn{border:none;background:none;color:var(--err);font-size:18px;cursor:pointer}
+  .num{text-align:right}
+  .row-actions{margin-top:10px}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--blue);background:#fff;color:var(--blue);padding:9px 16px}
+  button.primary{background:var(--blue);color:#fff}
+  button:disabled{opacity:.6;cursor:wait}
+  .totals{margin-left:auto;max-width:360px;margin-top:14px}
+  .totals div{display:flex;justify-content:space-between;align-items:center;padding:5px 0;gap:12px}
+  .totals .big{font-weight:700;font-size:18px;border-top:2px solid var(--blue);margin-top:4px;padding-top:8px}
+  .totals input{width:130px;text-align:right}
+  .confirm{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:14px}
+  .confirm input{width:auto;margin-top:3px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  #msg{margin-top:12px;padding:10px 14px;border-radius:8px;display:none;font-size:14px}
+  #msg.ok{display:block;background:#e7f6ec;color:var(--ok)}
+  #msg.err{display:block;background:#fdecea;color:var(--err)}
+  #msg.info{display:block;background:#eaf0fa;color:var(--blue)}
+  .recent td,.recent th{font-size:13px;padding:6px 8px}
+  details summary{cursor:pointer;color:var(--blue);font-weight:600}
+  @media print{body{background:#fff}.actions,.row-actions,.xbtn,details,#msg{display:none!important}.card,header{border:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>Gasket Order Form</h1>
+    <small>Order entry &middot; saved directly to Google Sheets</small>
+  </div>
+  <div class="serial">S. No.<br><b id="serial">—</b></div>
+</header>
+
+<form id="orderForm" autocomplete="off">
+
+<section class="card">
+  <h2>Customer</h2>
+  <div class="grid">
+    <div><label>Customer Name *</label><input name="customerName" required></div>
+    <div><label>Contact Person</label><input name="contactPerson"></div>
+    <div><label>Telephone</label><input name="telephone" type="tel"></div>
+    <div><label>Ordered by</label><input name="orderedBy"></div>
+    <div><label>Req-Date *</label><input name="reqDate" type="date" required></div>
+    <div><label>Del-Date</label><input name="delDate" type="date"></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Items</h2>
+  <div class="tablewrap">
+    <table id="items">
+      <thead><tr>
+        <th>SL</th><th>Code</th><th>Color</th><th>Sides</th><th style="min-width:220px">Description</th>
+        <th>Qty</th><th>U/P</th><th>Amount</th><th></th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="row-actions"><button type="button" id="addRow">+ Add row</button></div>
+
+  <div class="totals">
+    <div><span>Sub-total</span><b id="subTotal">0.00</b></div>
+    <div><span>VAT <input id="vatRate" type="number" step="0.01" value="5" style="width:60px"> %</span><b id="vatAmt">0.00</b></div>
+    <div class="big"><span>Total Amt (Incl. TAX)</span><span id="grandTotal">0.00</span></div>
+    <div><span>Advance Received (AED)</span><input name="advance" id="advance" type="number" step="0.01" min="0" value="0"></div>
+    <div><span>Balance</span><b id="balance">0.00</b></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="grid">
+    <div><label>Delivery by</label><input name="deliveryBy"></div>
+    <div><label>Notes</label><input name="notes"></div>
+  </div>
+  <label class="confirm">
+    <input type="checkbox" id="confirm" required>
+    <span>I confirm the gasket size and profile is correct for manufacturing. (Customer's signature obtained on the printed copy.)</span>
+  </label>
+  <div class="actions">
+    <button class="primary" type="submit" id="saveBtn">Save order to Google Sheet</button>
+    <button type="button" id="newBtn">New order</button>
+    <button type="button" onclick="window.print()">Print</button>
+  </div>
+  <div id="msg"></div>
+</section>
+</form>
+
+<section class="card">
+  <details>
+    <summary>Settings &amp; recent orders</summary>
+    <div class="grid" style="margin-top:12px">
+      <div><label>Apps Script Web App URL</label><input id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
+      <div><label>Access token (same as in Code.gs)</label><input id="cfgToken" type="password"></div>
+    </div>
+    <div class="actions">
+      <button type="button" id="saveCfg">Save settings</button>
+      <button type="button" id="loadRecent">Load recent orders</button>
+      <button type="button" id="syncPending">Sync offline orders</button>
+    </div>
+    <div class="tablewrap recent" style="margin-top:12px"><table id="recent"></table></div>
+  </details>
+</section>
+
+</div>
+
+<script>
+// ---- Configuration -------------------------------------------------------
+// Either paste your values here, or enter them under "Settings" (stored in this browser).
+const DEFAULT_URL = "";
+const DEFAULT_TOKEN = "";
+const START_ROWS = 10;
+// --------------------------------------------------------------------------
+
+const $ = (s, r=document) => r.querySelector(s);
+const cfg = {
+  get url(){ return localStorage.getItem("gs_url") || DEFAULT_URL },
+  get token(){ return localStorage.getItem("gs_token") || DEFAULT_TOKEN }
+};
+const fmt = n => (Number(n)||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const tbody = $("#items tbody");
+
+function addRow(){
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td class="sl"></td>
+    <td><input data-k="code"></td>
+    <td><input data-k="color"></td>
+    <td><select data-k="sides"><option></option><option>1</option><option>2</option><option>3</option><option>4</option></select></td>
+    <td><input data-k="description"></td>
+    <td><input data-k="qty" type="number" min="0" step="1" class="num"></td>
+    <td><input data-k="unitPrice" type="number" min="0" step="0.01" class="num"></td>
+    <td class="amt">0.00</td>
+    <td class="x"><button type="button" class="xbtn" title="Remove row">&times;</button></td>`;
+  tbody.appendChild(tr);
+  renumber();
+}
+function renumber(){ [...tbody.rows].forEach((r,i)=> r.cells[0].textContent = i+1); }
+
+tbody.addEventListener("input", calc);
+tbody.addEventListener("click", e=>{
+  if(e.target.classList.contains("xbtn")){
+    if(tbody.rows.length>1){ e.target.closest("tr").remove(); renumber(); calc(); }
+  }
+});
+$("#addRow").onclick = addRow;
+$("#vatRate").oninput = calc;
+$("#advance").oninput = calc;
+
+function calc(){
+  let sub = 0;
+  [...tbody.rows].forEach(r=>{
+    const q = +r.querySelector('[data-k=qty]').value || 0;
+    const u = +r.querySelector('[data-k=unitPrice]').value || 0;
+    const a = q*u; sub += a;
+    r.querySelector(".amt").textContent = fmt(a);
+  });
+  const vat = sub * ((+$("#vatRate").value||0)/100);
+  const total = sub + vat;
+  $("#subTotal").textContent = fmt(sub);
+  $("#vatAmt").textContent = fmt(vat);
+  $("#grandTotal").textContent = fmt(total);
+  $("#balance").textContent = fmt(total - (+$("#advance").value||0));
+  return {sub, vat, total, balance: total - (+$("#advance").value||0)};
+}
+
+function collect(){
+  const f = new FormData($("#orderForm"));
+  const t = calc();
+  const items = [...tbody.rows].map((r,i)=>{
+    const o = {sl:i+1};
+    r.querySelectorAll("[data-k]").forEach(el=> o[el.dataset.k] = el.value.trim());
+    o.qty = +o.qty||0; o.unitPrice = +o.unitPrice||0; o.amount = +(o.qty*o.unitPrice).toFixed(2);
+    return o;
+  }).filter(x => x.code || x.description || x.qty);
+  return {
+    customerName: f.get("customerName").trim(), contactPerson: f.get("contactPerson").trim(),
+    telephone: f.get("telephone").trim(), orderedBy: f.get("orderedBy").trim(),
+    reqDate: f.get("reqDate"), delDate: f.get("delDate"),
+    deliveryBy: f.get("deliveryBy").trim(), notes: f.get("notes").trim(),
+    vatRate: +$("#vatRate").value||0, subTotal:+t.sub.toFixed(2), vat:+t.vat.toFixed(2),
+    total:+t.total.toFixed(2), advance:+(+f.get("advance")||0).toFixed(2), balance:+t.balance.toFixed(2),
+    items
+  };
+}
+
+function show(text, type){ const m=$("#msg"); m.className=type; m.textContent=text; }
+
+async function post(payload){
+  // text/plain avoids a CORS preflight, which Apps Script doesn't support
+  const res = await fetch(cfg.url, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify({token:cfg.token, order:payload})});
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error||"Save failed");
+  return data;
+}
+
+function queue(order){
+  const q = JSON.parse(localStorage.getItem("pending")||"[]"); q.push(order);
+  localStorage.setItem("pending", JSON.stringify(q));
+}
+
+$("#orderForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const order = collect();
+  if(!order.items.length){ show("Add at least one item.","err"); return; }
+  const btn = $("#saveBtn"); btn.disabled = true;
+  try{
+    if(!cfg.url) throw new Error("No Google Sheet URL configured");
+    const r = await post(order);
+    $("#serial").textContent = r.serial;
+    show(`Saved. Order S. No. ${r.serial} is now in your Google Sheet.`,"ok");
+    $("#orderForm").dataset.saved = "1";
+  }catch(err){
+    queue(order);
+    show(`Could not reach Google Sheets (${err.message}). Order kept in this browser — use Settings → Sync offline orders later.`,"err");
+  }finally{ btn.disabled = false; }
+});
+
+$("#newBtn").onclick = ()=>{
+  $("#orderForm").reset(); tbody.innerHTML=""; for(let i=0;i<START_ROWS;i++) addRow();
+  $("#serial").textContent="—"; $("#vatRate").value=5; calc(); show("","info"); $("#msg").style.display="none";
+};
+
+$("#saveCfg").onclick = ()=>{
+  localStorage.setItem("gs_url",$("#cfgUrl").value.trim());
+  localStorage.setItem("gs_token",$("#cfgToken").value.trim());
+  show("Settings saved.","ok");
+};
+
+$("#syncPending").onclick = async ()=>{
+  const q = JSON.parse(localStorage.getItem("pending")||"[]");
+  if(!q.length){ show("No offline orders waiting.","info"); return; }
+  const left = []; let done = 0;
+  for(const o of q){ try{ await post(o); done++; }catch(_){ left.push(o); } }
+  localStorage.setItem("pending", JSON.stringify(left));
+  show(`Synced ${done} order(s). ${left.length} still waiting.`, left.length?"err":"ok");
+};
+
+$("#loadRecent").onclick = async ()=>{
+  try{
+    const res = await fetch(`${cfg.url}?action=recent&token=${encodeURIComponent(cfg.token)}`);
+    const d = await res.json(); if(!d.ok) throw new Error(d.error);
+    const t = $("#recent");
+    t.innerHTML = "<tr><th>S. No.</th><th>Date</th><th>Customer</th><th>Total</th><th>Balance</th></tr>" +
+      d.orders.map(o=>`<tr><td>${o.serial}</td><td>${o.created}</td><td>${o.customer}</td><td>${fmt(o.total)}</td><td>${fmt(o.balance)}</td></tr>`).join("");
+  }catch(err){ show("Could not load orders: "+err.message,"err"); }
+};
+
+// init
+$("#cfgUrl").value = cfg.url; $("#cfgToken").value = cfg.token;
+$("#newBtn").click();
+document.querySelector('[name=reqDate]').valueAsDate = new Date();
+</script>
+</body>
+</html>
